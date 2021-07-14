@@ -7,5 +7,5 @@ Debiasing of astrometric observations of minor planets reduced with pre-Gaia era
 * pip install -e .
 
 ## Run
-A Jupyter notebook contains a tutorial on how to use astrocat_debiasing. The necessary debiasing tables can be found [here](ftp://ssd.jpl.nasa.gov/pub/ssd/debias/debias_hires2018.tgz) and [here](ftp://ssd.jpl.nasa.gov/pub/ssd/debias/debias_2018.tgz). 
+A Jupyter notebook contains a tutorial on how to use astrocat_debiasing. The necessary debiasing tables can be found at ftp://ssd.jpl.nasa.gov/pub/ssd/debias/debias_hires2018.tgz and ftp://ssd.jpl.nasa.gov/pub/ssd/debias/debias_2018.tgz. The former contains a higher resolution model compared to the latter. 
 
