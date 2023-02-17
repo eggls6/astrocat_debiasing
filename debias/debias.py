@@ -8,7 +8,7 @@ __all__ = ['debiasRADec','icrf2radec','radec2icrf']
 
 def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     
-    """Astrometric catalog bias correction following Eggl et al. (2020). 
+    """Astrometric catalog bias correction following Eggl et al. (2020).
     
     Parameters:
     -----------
@@ -16,9 +16,9 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     dec     ... [rad] Declination
     epoch   ... [JD]  epoch of observation (Julian Date)
     catalog ... [string] MPC catalog identifier (one letter)
-    biasdf  ... [pandas] pandas DataFrame containing debiasing information 
+    biasdf  ... [pandas] pandas DataFrame containing debiasing information
     J2000   ... [JD] J2k epoch
-    nside   ... [int] nside resolution for healpix tesselation (nside = 2^N)  
+    nside   ... [int] nside resolution for healpix tesselation (nside = 2^N)
     
     Dependencies:
     -------------
@@ -29,10 +29,10 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     ra_deb  ... [rad] debiased Right Ascension at epoch
     dec_deb ... [rad] debiased declination at epoch
     """
-    # arcseconds to degrees
-    as2deg = 1/3600
-    # milliarcseconds to degrees
-    mas2deg = 1/3600/1000
+    # arcseconds to radians
+    as2rad = 1/3600*np.pi/180
+    # milliarcseconds to radians
+    mas2rad = 1/3600/1000*np.pi/180
     
     # find pixel from RADEC
     idx = hp.ang2pix(nside, np.rad2deg(ra), np.rad2deg(dec), nest=False, lonlat=True)
@@ -44,17 +44,17 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     dt = (epoch-J2000)/365
     
     # bias correction
-    ddec = (bias[colnames[1]]*as2deg+dt*bias[colnames[3]]*mas2deg)
+    ddec = (bias[colnames[1]]*as2rad+dt*bias[colnames[3]]*mas2rad)
     dec_deb = dec-ddec
     
-    dra = (bias[colnames[0]]*as2deg+dt*bias[colnames[2]]*mas2deg)
+    dra = (bias[colnames[0]]*as2rad+dt*bias[colnames[2]]*mas2rad)
     ra_deb = ra-dra/np.cos(dec)
-    
+
     # Quadrant correction
     xyz = radec2icrf(ra_deb, dec_deb, deg=False)  
     ra_deb, dec_deb = icrf2radec(xyz[0], xyz[1], xyz[2], deg=False)
     
-    return ra_deb, dec_deb 
+    return ra_deb, dec_deb
 
 
 def icrf2radec(x, y, z, deg=True):
