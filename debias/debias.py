@@ -6,7 +6,7 @@ import healpy as hp
 __all__ = ['debiasRADec','icrf2radec','radec2icrf']
 
 
-def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
+def debiasRADec(ra,dec,epoch,catalog,biasdf,tiledf,J2000=2451545.0,nside=256):
     
     """Astrometric catalog bias correction following Eggl et al. (2020).
     
@@ -34,21 +34,23 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     # milliarcseconds to radians
     mas2rad = 1/3600/1000*np.pi/180
     
-    # find pixel from RADEC
-    idx = hp.ang2pix(nside, np.rad2deg(ra), np.rad2deg(dec), nest=False, lonlat=True)
+    # calculate distance from each tile center
+    dist = np.sqrt((tiledf['ra']-ra)**2+(tiledf['dec']-dec)**2)
+    # find closest tile
+    closest_tile = tiledf['tileID'][dist.idxmin()]
     # find catalog data in pandas Data Frame
     colnames = [catalog+'_ra',catalog+'_dec',catalog+'_pm_ra',catalog+'_pm_dec']
-    bias = biasdf[colnames].iloc[idx]
+    bias = biasdf[colnames].iloc[closest_tile]
     
     # time from epoch in Julian years
     dt = (epoch-J2000)/365.25
     
     # bias correction
-    ddec = (bias[colnames[1]]*as2rad+dt*bias[colnames[3]]*mas2rad)
+    ddec = (bias[colnames[1]]+dt*bias[colnames[3]]/1000)*as2rad
     dec_deb = dec-ddec
     
-    dra = (bias[colnames[0]]*as2rad+dt*bias[colnames[2]]*mas2rad)
-    ra_deb = ra-dra/np.cos(dec)
+    dra = (bias[colnames[0]]+dt*bias[colnames[2]]/1000)*as2rad / np.cos(dec)
+    ra_deb = ra-dra
 
     # Quadrant correction
     xyz = radec2icrf(ra_deb, dec_deb, deg=False)  
