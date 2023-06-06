@@ -41,7 +41,7 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     bias = biasdf[colnames].iloc[idx]
     
     # time from epoch in Julian years
-    dt = (epoch-J2000)/365
+    dt = (epoch-J2000)/365.25
     
     # bias correction
     ddec = (bias[colnames[1]]*as2rad+dt*bias[colnames[3]]*mas2rad)
