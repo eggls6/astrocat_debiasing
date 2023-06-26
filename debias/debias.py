@@ -1,13 +1,16 @@
+import os
 import numpy as np
-import pandas as pd
 import healpy as hp
 
 
-__all__ = ['debiasRADec','icrf2radec','radec2icrf']
+__all__ = ['lowres_path','hires_path','debiasRADec','icrf2radec','radec2icrf']
 
+cwd = os.path.dirname(os.path.realpath(__file__))
+lowres_path = os.path.join(cwd,'lowres_data')
+hires_path = os.path.join(cwd,'hires_data')
 
 def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
-    
+
     """Astrometric catalog bias correction following Eggl et al. (2020).
     
     Parameters:
@@ -31,29 +34,21 @@ def debiasRADec(ra,dec,epoch,catalog,biasdf,J2000=2451545.0,nside=256):
     """
     # arcseconds to radians
     as2rad = 1/3600*np.pi/180
-    # milliarcseconds to radians
-    mas2rad = 1/3600/1000*np.pi/180
-    
     # find pixel from RADEC
     idx = hp.ang2pix(nside, np.rad2deg(ra), np.rad2deg(dec), nest=False, lonlat=True)
     # find catalog data in pandas Data Frame
-    colnames = [catalog+'_ra',catalog+'_dec',catalog+'_pm_ra',catalog+'_pm_dec']
+    colnames = [f'{catalog}_ra', f'{catalog}_dec', f'{catalog}_pm_ra', f'{catalog}_pm_dec']
     bias = biasdf[colnames].iloc[idx]
-    
     # time from epoch in Julian years
-    dt = (epoch-J2000)/365.25
-    
+    dt_jy = (epoch-J2000)/365.25
     # bias correction
-    ddec = (bias[colnames[1]]+dt*bias[colnames[3]]/1000)*as2rad
+    ddec = (bias[colnames[1]]+dt_jy*bias[colnames[3]]/1000)*as2rad
     dec_deb = dec-ddec
-    
-    dra = (bias[colnames[0]]+dt*bias[colnames[2]]/1000)*as2rad / np.cos(dec)
+    dra = (bias[colnames[0]]+dt_jy*bias[colnames[2]]/1000)*as2rad / np.cos(dec)
     ra_deb = ra-dra
-
     # Quadrant correction
-    xyz = radec2icrf(ra_deb, dec_deb, deg=False)  
+    xyz = radec2icrf(ra_deb, dec_deb, deg=False)
     ra_deb, dec_deb = icrf2radec(xyz[0], xyz[1], xyz[2], deg=False)
-    
     return ra_deb, dec_deb
 
 
@@ -75,17 +70,14 @@ def icrf2radec(x, y, z, deg=True):
     xu = x/r
     yu = y/r
     zu = z/r
-
     phi = np.arctan2(yu,xu)
     delta = np.arcsin(zu)
-
     if(deg):
         ra = np.mod(np.rad2deg(phi)+360,360)
         dec = np.rad2deg(delta)
     else:
         ra = np.mod(phi+2*np.pi,2*np.pi)
         dec = delta
-
     return ra, dec
 
 
